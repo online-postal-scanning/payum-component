@@ -4,22 +4,22 @@ declare(strict_types=1);
 namespace OLPS\PayumComponent\Storage\Factory;
 
 use OLPS\PayumComponent\Storage\PDOStorage;
+use Payum\Core\Storage\StorageInterface;
 use PDO;
-use Psr\Container\ContainerInterface;
 
-final class PDOStorageFactory
+final class PDOStorageFactory implements ModelStorageFactoryInterface
 {
-    public function __invoke(
-        ContainerInterface $container,
-        $requestedName,
-        ?array $options = null
-    ): PDOStorage {
+    public function __construct(
+        private PDO $pdo,
+    ){}
 
-
+    public function create(string $model, array $config): PDOStorage|StorageInterface
+    {
         return new PDOStorage(
-            $container->get(PDO::class),
-            $config['storageToken']['table'],
-            $config['storageToken']['idkey'],
+            $this->pdo,
+            $model,
+            $config['table'],
+            $config['idkey'],
         );
     }
 }

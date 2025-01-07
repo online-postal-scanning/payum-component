@@ -14,9 +14,11 @@ class PDOStorage extends AbstractStorage
 
     public function __construct(
         protected PDO $pdo,
+        string $modelClass,
         protected string $table,
         protected string $idkey
     ) {
+        parent::__construct($modelClass);
     }
 
     /**
@@ -105,14 +107,14 @@ class PDOStorage extends AbstractStorage
      */
     private function _queryModel($id)
     {
-        $res = $this-pdo->query("SELECT `payum-data-model` FROM `$this->table` WHERE `$this->idkey` = '$id' LIMIT 1", \PDO::FETCH_ASSOC);
-        $data = $res->fetch(\PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("SELECT `payum-data-model` FROM `$this->table` WHERE `$this->idkey` = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if($data !== false && count($data) === 1){
+        if ($data !== false && isset($data['payum-data-model'])) {
             return unserialize($data['payum-data-model']);
-        }else{
-            return false;
         }
+        return false;
     }
 
     /**
@@ -122,12 +124,20 @@ class PDOStorage extends AbstractStorage
     private function _insertOrUpdateModel($id, $model)
     {
         $data = $this->_queryModel($id);
-        $model = serialize($model);
+        $serialized = serialize($model);
 
-        if($data !== false){
-            $this-pdo->exec("UPDATE `$this->table` SET `payum-data-model` = '$model' WHERE `$this->idkey` = '$id'");
-        }else{
-            $this-pdo->exec("INSERT INTO `$this->table` (`$this->idkey`, `payum-data-model`) VALUES ('$id', '$model')");
+        if ($data !== false) {
+            $stmt = $this->pdo->prepare("UPDATE `$this->table` SET `payum-data-model` = :model WHERE `$this->idkey` = :id");
+            $stmt->execute([
+                'model' => $serialized,
+                'id' => $id
+            ]);
+        } else {
+            $stmt = $this->pdo->prepare("INSERT INTO `$this->table` (`$this->idkey`, `payum-data-model`) VALUES (:id, :model)");
+            $stmt->execute([
+                'id' => $id,
+                'model' => $serialized
+            ]);
         }
     }
 
@@ -136,6 +146,7 @@ class PDOStorage extends AbstractStorage
      */
     private function _deleteModel($id)
     {
-        $this-pdo->exec("DELETE FROM `$this->table` WHERE `$this->idkey` = '$id'");
+        $stmt = $this->pdo->prepare("DELETE FROM `$this->table` WHERE `$this->idkey` = :id");
+        $stmt->execute(['id' => $id]);
     }
 }

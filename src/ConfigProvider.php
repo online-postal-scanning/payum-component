@@ -7,6 +7,9 @@ namespace OLPS\PayumComponent;
 use OLPS\PayumComponent\Factory\PayumFactory;
 use OLPS\PayumComponent\Storage\Factory\PDOStorageFactory;
 use OLPS\PayumComponent\Storage\PDOStorage;
+use Payum\Core\Model\ArrayObject;
+use Payum\Core\Model\Payment;
+use Payum\Core\Model\Payout;
 use Payum\Core\Model\Token;
 use Payum\Core\Payum;
 
@@ -34,7 +37,8 @@ class ConfigProvider
         return [
             'gateways' => [],
             'storage' => [
-                'types' => [
+                'default' => 'pdo',
+                'storages' => [
                     'pdo' => [
                         'class' => PDOStorage::class,
                         'factory' => PDOStorageFactory::class,
@@ -42,8 +46,19 @@ class ConfigProvider
                         'idkey' => 'id',
                     ],
                 ],
-                'token' => [
-                    'type' => 'pdo',
+                'models' => [
+                    ArrayObject::class => [],
+                    Payment::class => [
+                        'storage' => 'pdo',
+                        'table' => 'payum',
+                        'idkey' => 'id',
+                    ],
+                    Payout::class => [
+                        'storage' => 'default',
+                    ],
+                ],
+                'tokenStorage' => [
+                    'storage' => 'pdo',
                     'class' => Token::class,
                 ],
             ],
