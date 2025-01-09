@@ -35,31 +35,38 @@ class ConfigProvider
     private function getPayumConfig(): array 
     {
         return [
+            'tokenFactoryUri' => '/',
             'gateways' => [],
             'storage' => [
                 'default' => 'pdo',
-                'storages' => [
+                'factories' => [
                     'pdo' => [
                         'class' => PDOStorage::class,
                         'factory' => PDOStorageFactory::class,
-                        'table' => 'payum',
                         'idkey' => 'id',
                     ],
                 ],
                 'models' => [
-                    ArrayObject::class => [],
+                    ArrayObject::class => [
+                        'table' => 'payum_data',
+                    ],
                     Payment::class => [
-                        'storage' => 'pdo',
-                        'table' => 'payum',
-                        'idkey' => 'id',
+                        'factory' => 'pdo',
+                        'table' => 'payum_payment',
                     ],
                     Payout::class => [
-                        'storage' => 'default',
+                        'factory' => 'default',
                     ],
                 ],
-                'tokenStorage' => [
-                    'storage' => 'pdo',
-                    'class' => Token::class,
+            ],
+            'token' => [
+                'factory' => [
+                    'baseUri' => '/',
+                ],
+                'storage' => [
+                    'factory' => 'pdo',
+                    'table' => 'payum_token',
+                    'idkey' => 'hash',
                 ],
             ],
         ];
